@@ -1,0 +1,7 @@
+{{ if page_builder }}
+    <div class="page-builder space-y-12">
+        {{ page_builder }}
+            {{ partial src="blocks/{type}" }}
+        {{ /page_builder }}
+    </div>
+{{ /if }}

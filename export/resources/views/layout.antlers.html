@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="{{ site:short_locale }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{{ seo_title ?? title }} — {{ site:name }}</title>
+        {{ if seo_description }}<meta name="description" content="{{ seo_description }}">{{ /if }}
+        {{ vite src="resources/css/site.css" }}
+    </head>
+    <body class="antialiased">
+        <main class="mx-auto max-w-3xl px-6 py-12">
+            {{ template_content }}
+        </main>
+    </body>
+</html>

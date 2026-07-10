@@ -1,0 +1,31 @@
+title: 'Page builder'
+fields:
+  -
+    handle: page_builder
+    field:
+      type: replicator
+      display: 'Page builder'
+      instructions: 'Add sections to build the page. Drag to reorder, click to edit.'
+      collapse: false
+      sets:
+        content:
+          display: Content
+          sets:
+            rich_text:
+              display: 'Rich text (example block — replace with your own)'
+              instructions: 'A block of body text. This is the only example block the starter kit ships; delete it and add your own.'
+              icon: text-align-left
+              fields:
+                -
+                  handle: body
+                  field:
+                    type: bard
+                    display: Body
+                    buttons:
+                      - h2
+                      - bold
+                      - italic
+                      - unorderedlist
+                      - orderedlist
+                      - anchor
+                    save_html: true

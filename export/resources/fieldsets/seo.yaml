@@ -1,0 +1,15 @@
+title: SEO
+fields:
+  -
+    handle: seo_title
+    field:
+      type: text
+      display: 'SEO title'
+      instructions: 'Optional. Overrides the page title in search results and browser tabs.'
+  -
+    handle: seo_description
+    field:
+      type: textarea
+      display: 'Meta description'
+      instructions: 'One or two sentences shown in search results.'
+      character_limit: 160

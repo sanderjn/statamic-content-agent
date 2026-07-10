@@ -1,0 +1,97 @@
+name: Content guardrails
+
+on:
+  push:
+    branches: [staging, main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  path-allowlist:
+    name: Client commits touch only content
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    env:
+      CLIENT_EMAILS: "" # agentic:client_emails — space-separated editor emails, filled by `agentic:setup`
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fail client commits that change non-content paths
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [ -z "${CLIENT_EMAILS// }" ] && { echo "No client emails configured; skipping."; exit 0; }
+          before="$PUSH_BEFORE"; after="$PUSH_AFTER"
+          if [ "$before" = "0000000000000000000000000000000000000000" ]; then range="$after -n 1"; else range="$before..$after"; fi
+          fail=0
+          for commit in $(git rev-list $range); do
+            author="$(git show -s --format='%ae' "$commit")"
+            is_client=0
+            for email in $CLIENT_EMAILS; do [ "$author" = "$email" ] && is_client=1 && break; done
+            [ "$is_client" -eq 0 ] && { echo "Skipping $commit (author $author not a client)"; continue; }
+            while IFS= read -r file; do
+              [ -z "$file" ] && continue
+              case "$file" in
+                content/collections/*/*|content/globals/*|content/taxonomies/*|content/navigation/*|content/trees/*|content/assets/*|public/assets/*|content/AGENTS.md|content/agent-reference.md) ;;
+                *) echo "::error::Client commit $commit changes disallowed path: $file"; fail=1 ;;
+              esac
+            done < <(git diff-tree --no-commit-id --name-only -r "$commit")
+          done
+          [ "$fail" -ne 0 ] && { echo "A client commit touched files outside the content allowlist."; exit 1; }
+          echo "All client commits stay within the content allowlist."
+
+  guard-release:
+    name: Only a maintainer may land changes on main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      MAINTAINERS: "" # agentic:maintainers — space-separated GitHub usernames, filled by `agentic:setup`
+    steps:
+      - name: Fail if main was changed by anyone but a maintainer
+        env:
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          [ -z "${MAINTAINERS// }" ] && { echo "::error::No maintainers configured. Run agentic:setup."; exit 1; }
+          for m in $MAINTAINERS; do [ "$ACTOR" = "$m" ] && { echo "main updated by $ACTOR (maintainer) — ok"; exit 0; }; done
+          echo "::error::main was updated by '$ACTOR', not a maintainer. Production-bound changes go through a reviewed PR, never a direct push or self-merge."
+          exit 1
+
+  validate-and-test:
+    name: Validate content and run tests
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: gd, exif
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Build frontend
+        run: |
+          npm ci
+          npm run build
+      - name: Regenerate content catalog and fail if stale
+        run: |
+          php artisan content:catalog
+          git diff --exit-code content/agent-reference.md
+      - name: Validate content
+        run: php artisan content:validate
+      - name: Check code style
+        run: vendor/bin/pint --test app tests   # scope to kit code; a fresh Statamic skeleton isn't pint-clean under the default preset
+      - name: Run tests
+        run: php artisan test --compact --exclude-group=image-cli

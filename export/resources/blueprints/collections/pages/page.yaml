@@ -1,0 +1,42 @@
+title: Page
+tabs:
+  main:
+    display: Content
+    sections:
+      -
+        display: Basics
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              required: true
+              display: Title
+              validate:
+                - required
+      -
+        display: 'Page content'
+        fields:
+          -
+            import: page_builder
+  seo:
+    display: SEO
+    sections:
+      -
+        fields:
+          -
+            import: seo
+  sidebar:
+    display: Sidebar
+    sections:
+      -
+        display: Section
+        fields:
+          -
+            handle: slug
+            field:
+              type: slug
+              validate:
+                - required
+                - 'max:200'
+              display: Slug

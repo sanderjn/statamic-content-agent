@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "deny": [
+      "Write(./app/**)",
+      "Write(./config/**)",
+      "Write(./resources/**)",
+      "Write(./routes/**)",
+      "Write(./database/**)",
+      "Write(./bootstrap/**)",
+      "Write(./.github/**)",
+      "Write(./content/collections/*.yaml)",
+      "Write(./composer.json)",
+      "Write(./composer.lock)",
+      "Write(./package.json)",
+      "Write(./package-lock.json)",
+      "Write(./vite.config.js)",
+      "Edit(./app/**)",
+      "Edit(./config/**)",
+      "Edit(./resources/**)",
+      "Edit(./routes/**)",
+      "Edit(./database/**)",
+      "Edit(./bootstrap/**)",
+      "Edit(./.github/**)",
+      "Edit(./content/collections/*.yaml)",
+      "Edit(./composer.json)",
+      "Edit(./composer.lock)",
+      "Edit(./package.json)",
+      "Edit(./package-lock.json)",
+      "Edit(./vite.config.js)"
+    ]
+  }
+}

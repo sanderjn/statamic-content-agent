@@ -1,0 +1,10 @@
+{
+    "name": "sanderjn/statamic-agentic",
+    "description": "Agentic — a Statamic starter kit that makes your site safely editable by an AI agent.",
+    "extra": {
+        "statamic": {
+            "name": "Agentic",
+            "description": "Page-builder scaffold + guardrails for safe AI content editing."
+        }
+    }
+}
