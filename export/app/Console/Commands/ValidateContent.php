@@ -2,22 +2,24 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Attributes\Description;
-use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Illuminate\Validation\ValidationException;
 use Statamic\Facades\Asset;
 use Statamic\Facades\Entry;
 use Statamic\Facades\Fieldset;
 use Statamic\Facades\GlobalSet;
+use Statamic\Facades\Nav;
 use Statamic\Facades\Term;
 use Statamic\Fields\Field;
 use Statamic\Fields\Fields;
 
-#[Signature('content:validate')]
-#[Description('Validate all flat-file content against its blueprints. Exits non-zero on any schema violation.')]
 class ValidateContent extends Command
 {
+    protected $signature = 'content:validate';
+
+    protected $description = 'Validate all flat-file content against its blueprints. Exits non-zero on any schema violation.';
+
     private const SET_META_KEYS = ['id', 'type', 'enabled'];
 
     private const OPTION_FIELD_TYPES = ['select', 'radio', 'button_group'];
@@ -26,6 +28,7 @@ class ValidateContent extends Command
     {
         $problems = $this->collectProblems();
         $problems = [...$problems, ...$this->blockPartialProblems()];
+        $problems = [...$problems, ...$this->navProblems()];
 
         if ($problems === []) {
             $this->info('All content is valid.');
@@ -52,9 +55,12 @@ class ValidateContent extends Command
             if (! $blueprint = $entry->blueprint()) {
                 continue;
             }
-            $problems = [...$problems, ...$this->fieldsProblems(
+            $problems = [...$problems, ...$this->entryLikeProblems(
                 $blueprint->fields(),
-                $entry->data()->all(),
+                // Slug lives outside `data()` but blueprints routinely mark it
+                // required, so fold it in before validating or every entry would
+                // look like it is missing a required slug.
+                ['slug' => $entry->slug(), ...$entry->data()->all()],
                 "entry [{$entry->id()}] ({$entry->locale()})"
             )];
         }
@@ -63,9 +69,9 @@ class ValidateContent extends Command
             if (! $blueprint = $term->blueprint()) {
                 continue;
             }
-            $problems = [...$problems, ...$this->fieldsProblems(
+            $problems = [...$problems, ...$this->entryLikeProblems(
                 $blueprint->fields(),
-                $term->data()->all(),
+                ['slug' => $term->slug(), ...$term->data()->all()],
                 "term [{$term->id()}]"
             )];
         }
@@ -75,7 +81,7 @@ class ValidateContent extends Command
                 continue;
             }
             foreach ($set->localizations() as $locale => $localization) {
-                $problems = [...$problems, ...$this->fieldsProblems(
+                $problems = [...$problems, ...$this->entryLikeProblems(
                     $blueprint->fields(),
                     $localization->data()->all(),
                     "global [{$set->handle()}] ({$locale})"
@@ -84,6 +90,53 @@ class ValidateContent extends Command
         }
 
         return $problems;
+    }
+
+    /**
+     * Every stored record gets two passes: the blueprint's own validation rules
+     * (required, max, character_limit, …) exactly as the Control Panel enforces
+     * them, plus the structural checks the rule engine can't express (unknown
+     * block types, unknown fields, invalid options, missing assets).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<int, string>
+     */
+    private function entryLikeProblems(Fields $fields, array $data, string $label): array
+    {
+        return [
+            ...$this->ruleProblems($fields, $data, $label),
+            ...$this->fieldsProblems($fields, $data, $label),
+        ];
+    }
+
+    /**
+     * Run the blueprint's real validation rules against the stored values. Uses
+     * Statamic's own validator, so nested replicator/grid rules are covered the
+     * same way a Control Panel save would cover them.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<int, string>
+     */
+    private function ruleProblems(Fields $fields, array $data, string $label): array
+    {
+        try {
+            $fields->addValues($data)->validator()->validate();
+        } catch (ValidationException $e) {
+            $problems = [];
+            foreach ($e->errors() as $messages) {
+                foreach ((array) $messages as $message) {
+                    $problems[] = "{$label}: {$message}";
+                }
+            }
+
+            return $problems;
+        } catch (\Throwable) {
+            // A malformed value can make a fieldtype's rule builder throw; the
+            // structural pass reports that shape problem, so don't crash here.
+            return [];
+        }
+
+        return [];
     }
 
     /**
@@ -164,17 +217,27 @@ class ValidateContent extends Command
     {
         $options = $field->get('options', []);
 
-        if ($options === [] || $field->get('multiple') || $value === null || $value === '' || is_array($value)) {
+        if ($options === [] || $value === null || $value === '') {
             return [];
         }
 
         $keys = array_is_list($options) ? $options : array_keys($options);
+        $problems = [];
 
-        if (in_array($value, $keys, true)) {
-            return [];
+        // Single-value fields hold a scalar; `multiple` ones hold a list. Check
+        // every selected value against the declared option keys either way.
+        foreach (is_array($value) ? $value : [$value] as $selected) {
+            if ($selected === null || $selected === '') {
+                continue;
+            }
+
+            if (! in_array($selected, $keys, true)) {
+                $shown = is_scalar($selected) ? $selected : gettype($selected);
+                $problems[] = "{$label}: field '{$handle}' has invalid option '{$shown}'";
+            }
         }
 
-        return ["{$label}: field '{$handle}' has invalid option '{$value}'"];
+        return $problems;
     }
 
     /**
@@ -221,6 +284,32 @@ class ValidateContent extends Command
         }
 
         return $flat;
+    }
+
+    /**
+     * Every navigation item that links to an entry must point at one that still
+     * exists. A dangling reference makes the menu item silently vanish (or 404),
+     * which the front-end never flags.
+     *
+     * @return array<int, string>
+     */
+    public function navProblems(): array
+    {
+        $problems = [];
+
+        foreach (Nav::all() as $nav) {
+            foreach ($nav->trees() as $tree) {
+                foreach ($tree->flattenedPages() as $page) {
+                    $reference = $page->reference();
+
+                    if ($reference !== null && Entry::find($reference) === null) {
+                        $problems[] = "navigation [{$nav->handle()}]: menu item links to a page that no longer exists (id '{$reference}')";
+                    }
+                }
+            }
+        }
+
+        return $problems;
     }
 
     /**
