@@ -2,17 +2,17 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Attributes\Description;
-use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Statamic\Facades\Fieldset;
 use Statamic\Fields\Fields;
 
-#[Signature('content:catalog')]
-#[Description('Generate the agent content catalog from the page-builder fieldset so the content agent always knows the legal sections and fields.')]
 class BuildAgentCatalog extends Command
 {
+    protected $signature = 'content:catalog';
+
+    protected $description = 'Generate the agent content catalog from the page-builder fieldset so the content agent always knows the legal sections and fields.';
+
     public function handle(): int
     {
         $handle = config('agentic.page_builder_fieldset');

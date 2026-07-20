@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Attributes\Description;
-use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Number;
@@ -12,10 +10,12 @@ use Statamic\Contracts\Assets\Asset;
 use Statamic\Facades\AssetContainer;
 use Statamic\Facades\Glide;
 
-#[Signature('assets:compress {container=assets} {--dry-run : Report what would change without modifying any files}')]
-#[Description('Resize and recompress existing image assets in place (same format, capped at 3840px) to mirror the upload source preset.')]
 class CompressAssets extends Command
 {
+    protected $signature = 'assets:compress {container=assets} {--dry-run : Report what would change without modifying any files}';
+
+    protected $description = 'Resize and recompress existing image assets in place (same format, capped at 3840px) to mirror the upload source preset.';
+
     private const MAX_DIMENSION = 3840;
 
     private const QUALITY = 90;
