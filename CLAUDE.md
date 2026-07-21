@@ -1,6 +1,6 @@
-# Agentic
+# Content Agent
 
-A Statamic **starter kit** (published as `sanderjn/statamic-agentic`) that makes a Statamic site safely editable by an AI content-editing agent. This repo is the *kit source*, not a runnable site — the shippable files live under `export/` and get copied into a real Statamic project on install. There is no full Laravel/Statamic app here, so `php artisan …` commands do not run in this repo; they run in an installed target project.
+A Statamic **starter kit** (published as `sanderjn/statamic-content-agent`) that makes a Statamic site safely editable by an AI content-editing agent. This repo is the *kit source*, not a runnable site — the shippable files live under `export/` and get copied into a real Statamic project on install. There is no full Laravel/Statamic app here, so `php artisan …` commands do not run in this repo; they run in an installed target project.
 
 ## Stack
 - Statamic v6, PHP 8.3+ (single-locale).
