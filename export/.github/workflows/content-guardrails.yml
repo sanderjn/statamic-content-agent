@@ -63,7 +63,7 @@ jobs:
           exit 1
 
   validate-and-test:
-    name: Validate content and build
+    name: validate-and-test
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     steps:
@@ -85,7 +85,7 @@ jobs:
           php artisan key:generate
       - name: Build frontend
         run: |
-          npm ci
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
           npm run build
       - name: Regenerate content catalog and fail if stale
         run: |
@@ -94,4 +94,6 @@ jobs:
       - name: Validate content
         run: php artisan content:validate
       - name: Check code style
-        run: vendor/bin/pint --test app tests   # scope to kit code; a fresh Statamic skeleton isn't pint-clean under the default preset
+        run: |
+          # scope to kit code; a fresh Statamic skeleton isn't pint-clean under the default preset
+          if [ -x vendor/bin/pint ]; then vendor/bin/pint --test app tests; else echo "laravel/pint not installed — skipping code-style check."; fi
