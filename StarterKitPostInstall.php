@@ -4,7 +4,7 @@ class StarterKitPostInstall
 {
     public function handle($console)
     {
-        $console->info('Agentic installed.');
+        $console->info('Content Agent installed.');
         $console->line('Next steps:');
         $console->line('  1. Run:  php artisan agentic:setup   (stamps your site name, preview URL, maintainer, branches)');
         $console->line('  2. Read: SETUP.md   (create the GitHub repo, staging/main branches, branch protection, deploy host)');

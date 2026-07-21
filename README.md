@@ -1,14 +1,14 @@
-# Agentic
+# Content Agent
 
 A Statamic starter kit that lets a non-developer edit the site by **talking to an AI agent**
 (Claude Code or similar), and makes it so the agent *can't break the site*: not the code, not the
 schema, not production.
 
-For a one-line tweak, the Control Panel is already a fine editing experience. Agentic isn't trying to
+For a one-line tweak, the Control Panel is already a fine editing experience. Content Agent isn't trying to
 replace it there. Where it earns its keep is **volume and structure**: redoing a whole page,
 duplicating a page and adapting it, drafting a batch of blog posts, running a site-wide tone pass.
 Your client says "here are three new team members, add them all to the team page in our usual tone"
-and the agent does the repetitive work across the underlying content. Agentic supplies the guardrails,
+and the agent does the repetitive work across the underlying content. Content Agent supplies the guardrails,
 the validation, and the publish flow that make that safe.
 
 ---
@@ -40,7 +40,7 @@ plain text, so an agent can edit that content directly. Two things make it trust
 ### What catches mistakes
 
 Statamic does **not** validate flat-file content when it loads: a malformed edit renders wrong or
-blank, silently. That's the gap Agentic closes:
+blank, silently. That's the gap Content Agent closes:
 
 - **`php artisan content:validate`** walks every entry, term, and global against its blueprint and
   fails on anything the Control Panel would never allow: a missing required field, a value past its
@@ -114,11 +114,11 @@ add your own.
 
 Create a new site from the kit:
 
-    statamic new my-site sanderjn/statamic-agentic
+    statamic new my-site sanderjn/statamic-content-agent
 
 …or add it to an existing Statamic project:
 
-    php please starter-kit:install sanderjn/statamic-agentic
+    php please starter-kit:install sanderjn/statamic-content-agent
 
 ## Set up
 
@@ -140,8 +140,8 @@ point them at `content/AGENTS.md` yourself).
 
 - Statamic v6, PHP 8.3+.
 - Single-locale. Multilingual support is on the roadmap.
-- Deployment is your choice (Ploi, Forge, Vapor, SSG). Agentic sets up the repo + branches + CI, not
-  the host.
+- Deployment is your choice (Ploi, Forge, Vapor, SSG). Content Agent sets up the repo + branches +
+  CI, not the host.
 
 ## For developers
 

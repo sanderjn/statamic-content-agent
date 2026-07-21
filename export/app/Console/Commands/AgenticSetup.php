@@ -78,7 +78,7 @@ class AgenticSetup extends Command
         $missedCount = count($missed);
 
         if ($missedCount === 0) {
-            $this->info('Agentic setup complete. Review the changes, then commit.');
+            $this->info('Setup complete. Review the changes, then commit.');
         } else {
             $stampedCount = $total - $missedCount;
             $this->warn("Stamped {$stampedCount} of {$total} values; {$missedCount} could not be found (see warnings above).");
