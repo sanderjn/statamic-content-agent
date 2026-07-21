@@ -14,6 +14,13 @@ identity they carry. Re-run it any time; it is idempotent. Commit the result.
 
 ## 2. Create the GitHub repo + branches
 
+First install the front-end dependencies and build once — this generates `package-lock.json`, which
+CI uses (`npm ci`) for reproducible builds, so commit it along with everything else:
+
+    npm install && npm run build
+
+Then create the repo and branches:
+
     git init && git add -A && git commit -m "Initial commit"
     gh repo create <you>/<site> --private --source=. --push
     git branch staging && git push -u origin staging
@@ -52,6 +59,37 @@ rebuilt. Add this to your deploy hook, after the new code is in place:
 
     php artisan content:catalog        # regenerate the block catalogue
     # then run your agent from the project root and let content/AGENTS.md guide it
+
+> **Note for developers:** the local edit-guard (a Claude Code PreToolUse hook) applies to *every*
+> Claude Code session in this repo, including yours. When you're building the site yourself, lift it
+> by setting `AGENTIC_DEVELOPER=1` — the cleanest way is an `env` block in a local, untracked
+> `.claude/settings.local.json`. Your maintainer commits are exempt from the content guardrails
+> anyway.
+
+## 6. Hand it over to your editor
+
+Setting up the editor's (client's) machine is a developer task — do it *with* or *for* them, don't
+assume they'll manage it alone. An honest checklist:
+
+- Clone the repo onto their machine.
+- Install the toolchain: PHP 8.3, Composer, and Node. On a Mac, [Laravel Herd](https://herd.laravel.com)
+  is the easy path (it bundles PHP and a local server).
+- In the project folder: `composer install`, `cp .env.example .env`, `php artisan key:generate`,
+  `npm install`.
+- Install Claude Code and sign it in **on the client's own account**, not yours.
+- Set their git identity to the **client's own name and email** — *not* a maintainer email. Maintainer
+  commits are exempt from the content guardrails; the client's commits must be held to them, so their
+  email must not be on the maintainer list.
+- Give them push access to the repo.
+- Run `gh auth login` so the agent can open the publish pull request.
+
+Then, in a terminal in the project folder, run:
+
+    claude
+
+The shipped brief (`content/AGENTS.md`) takes over from there. On the first session the agent offers
+to fill in the editor notes (tone of voice, writing preferences) together — a few friendly questions,
+and every later edit sounds the way they want.
 
 ## Adding your own blocks
 
