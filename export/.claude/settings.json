@@ -10,7 +10,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git pull)",
+      "Bash(git pull --rebase)",
       "Bash(git push)",
+      "Bash(uuidgen)",
       "Bash(git checkout staging)",
       "Bash(git switch staging)",
       "Bash(gh pr create:*)"

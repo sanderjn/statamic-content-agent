@@ -16,6 +16,9 @@ return [
     // Content-agent brain.
     'agents_file' => 'content/AGENTS.md',
 
+    // Developer-facing editor onboarding prompt (stamped by agentic:setup).
+    'onboarding_file' => 'ONBOARDING.md',
+
     // Git topology the agent + docs assume.
     'branches' => [
         'work' => 'staging',
