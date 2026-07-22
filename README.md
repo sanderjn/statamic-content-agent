@@ -29,8 +29,10 @@ plain text, so an agent can edit that content directly. Two things make it trust
   sees YAML, a branch, or a blueprint.
 - **`content/agent-reference.md`**: an **auto-generated** catalogue of every page-builder block and
   its fields, types, and allowed options. The agent reads this before adding content, so it never
-  invents a block or field that doesn't exist. It's regenerated from your fieldsets by
-  `php artisan content:catalog`, so it can never drift from what the site actually supports.
+  invents a block or field that doesn't exist. You regenerate it from your fieldsets with
+  `php artisan content:catalog` whenever you add or change a block — it's a build step, not
+  automatic. So it can't drift silently: CI regenerates the catalogue on every push and fails if the
+  committed copy is stale, so an out-of-date catalogue can never reach the agent in production.
 - **`content/editor-notes.md`**: the editor's **own** space for tone of voice, writing do's and
   don'ts, recurring page structures, and sign-off. The first time an editor works with the agent it offers to fill
   this in (a short interview, or run `/setup` in Claude Code), then reads it before every edit so the
@@ -133,13 +135,32 @@ it lives at `export/SETUP.md`). It's a short, ordered checklist:
 1. Run `php artisan agentic:setup` (stamps your site name, preview URL, maintainer, and branches
    into the docs and CI).
 2. Create the GitHub repo with `staging`/`main` branches.
-3. Turn on branch protection.
+3. Turn on branch protection for `main`. Note: GitHub only offers this on private repos with a paid
+   plan (Pro/Team/org); on a free account it needs a **public** repo. Without it, the shipped CI plus
+   your own review discipline are the only gate — see SETUP.md for the full trade-off.
 4. Point your host at the branches.
-5. Hand the project over to your editor (SETUP.md walks through setting up their machine).
+5. Hand the project over to your editor (see below, and SETUP.md for the exact commands).
 
 Then run your agent from the project root: the shipped root `CLAUDE.md` imports
 `content/AGENTS.md`, so Claude Code picks up the content-editor brief automatically (other agents:
 point them at `content/AGENTS.md` yourself).
+
+## Hand over to your editor
+
+The easiest setup, and the one to reach for by default: the editor installs almost nothing — git,
+Claude Code, and the GitHub CLI. The agent edits the flat-file content and pushes to `staging`, your
+deploy pipeline builds and publishes it, and the editor reviews on the preview URL. Because you own the
+deployment, everything technical — the front-end rebuild, the content-index refresh — stays on your
+side, not the client's.
+
+You *can* instead give the editor a local setup (for instant validation, or a localhost preview that
+doesn't wait on a deploy), but that puts more on their machine and usually needs a hand from you to wire
+up. Either way you handle the few account steps an agent can't: signing Claude Code into the client's
+own account, push access, `gh auth login`, and keeping their git identity off the maintainer list.
+
+**`SETUP.md` walks through it, tier by tier.** Then the editor runs `claude`, `content/AGENTS.md` takes
+over, and the loop is: they describe a change in plain words → the agent edits and pushes to the preview
+→ they review → they say "publish" and the agent opens one PR for you to approve.
 
 ## Requirements & notes
 

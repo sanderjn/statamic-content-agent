@@ -54,11 +54,20 @@ Agentic does not configure a host. Point your platform at the branches:
 - **Vapor:** environments `staging` and `production` tracking those branches.
 - **SSG (Netlify/static):** build on push to each branch.
 
-**Whatever the host, rebuild the content index on every deploy.** Statamic caches a flat-file index
-(the "Stache"); after a deploy it can be stale, so new pages and menu changes won't show up until it's
-rebuilt. Add this to your deploy hook, after the new code is in place:
+**Whatever the host, your deploy must build the front-end assets and rebuild the content index.**
+The CSS/JS is compiled by Vite and is *not* committed, so a deploy that skips the build serves an
+unstyled site. And Statamic caches a flat-file index (the "Stache") that goes stale after a deploy, so
+new pages and menu changes won't show up until it's rebuilt. A deploy hook, after the new code is in
+place:
 
+    composer install --no-dev
+    npm ci && npm run build
     php artisan statamic:stache:refresh
+
+**`staging` deploy speed matters.** In the lightest editor setup (see step 6) the editor keeps no local
+runtime and reviews every change on the `staging` preview — so that round-trip has to be quick. Enable
+auto-deploy; and if your platform lets you, skip the asset rebuild when a push only touched `content/`
+(nothing under `resources/`), so content edits redeploy in seconds instead of waiting on a full build.
 
 ## 5. Start editing
 
@@ -73,20 +82,32 @@ rebuilt. Add this to your deploy hook, after the new code is in place:
 
 ## 6. Hand it over to your editor
 
-Setting up the editor's (client's) machine is a developer task — do it *with* or *for* them, don't
-assume they'll manage it alone. An honest checklist:
+Decide how much to install on the editor's machine. The content is flat files, so the **recommended
+default** is to install as little as possible and let the editor review everything on the `staging`
+preview: you own the deployment, so the front-end build and index refresh happen there, not on their
+machine. A local setup is possible too, but it puts more on their machine and usually needs a hand from
+you to wire up. Three tiers:
 
-- Clone the repo onto their machine.
-- Install the toolchain: PHP 8.3, Composer, and Node. On a Mac, [Laravel Herd](https://herd.laravel.com)
-  is the easy path (it bundles PHP and a local server).
-- In the project folder: `composer install`, `cp .env.example .env`, `php artisan key:generate`,
-  `npm install`.
-- Install Claude Code and sign it in **on the client's own account**, not yours.
+- **Lite (recommended)** — `staging` auto-deploys fast. Install: git, Claude Code, `gh`. No PHP, no
+  Node. The agent edits files and pushes; CI validates on push; the editor reviews on the `staging` URL.
+- **+ Validate** — as Lite, plus PHP 8.3 and `composer install`, so the agent runs `content:validate`
+  before it pushes and catches mistakes before they reach the preview. Still no Node.
+- **Full local** — as + Validate, plus Node and `npm install && npm run build` once, so the site renders
+  on localhost and the editor never waits on a deploy. Note: they must rebuild after any design change
+  you ship, which is why this tier is usually *more* upkeep for a non-technical client, not less.
+
+The account steps are yours in every tier (an agent can't do these for you):
+
+- Install Claude Code and sign it in **on the client's own account**, not yours. On a Mac,
+  [Laravel Herd](https://herd.laravel.com) is the easy way to get PHP (and Node) for the local tiers.
 - Set their git identity to the **client's own name and email** — *not* a maintainer email. Maintainer
   commits are exempt from the content guardrails; the client's commits must be held to them, so their
   email must not be on the maintainer list.
-- Give them push access to the repo.
-- Run `gh auth login` so the agent can open the publish pull request.
+- Give them push access to the repo, and run `gh auth login` so the agent can open the publish PR.
+
+The command steps — clone the repo, `composer install`, `cp .env.example .env`,
+`php artisan key:generate`, and (Full local only) `npm install && npm run build` — are ordinary commands
+you can run yourself, or ask the editor's own agent to run once Claude Code is up.
 
 Then, in a terminal in the project folder, run:
 

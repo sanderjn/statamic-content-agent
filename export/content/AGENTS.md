@@ -115,12 +115,19 @@ If you added, removed, or reordered pages or menu items, also run `php artisan s
 so the preview site notices the change — a new page won't show up (and won't validate against the
 menu) until you do.
 
+**If `php artisan …` doesn't run on this computer**, this site is set up the light way: the same checks
+run automatically the moment you push, so you don't run them here. Skip the two commands above, save and
+push as normal, and if a check finds a problem it comes back to you to fix and push again. (Not sure
+which setup you're on? Just try `php artisan content:validate` — if it errors that it can't find the
+command or the site, you're on the light setup.)
+
 ## Saving and publishing
 
 Saving is two concrete steps, and you do both yourself — the person just hears plain words, never "git".
 
-1. **Save to preview.** Once `content:validate` passes (and, after adding, removing, or reordering a
-   page, once you've run `statamic:stache:refresh`), commit the content you changed to the
+1. **Save to preview.** Once you've done your checks (see "Before you commit" above — `content:validate`,
+   plus `statamic:stache:refresh` after adding, removing, or reordering a page; on the light setup you
+   skip these and let the automatic checks run after you push), commit the content you changed to the
    `<!-- agentic:work_branch -->staging<!-- /agentic:work_branch -->` branch: stage the changed files
    with `git add` and `git commit` with a short, plain message like "Add Our Coffee page", then send
    it up with `git push`. **It's the commit *and push* together that make the change appear on the
