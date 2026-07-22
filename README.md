@@ -50,6 +50,11 @@ blank, silently. That's the gap Agentic closes:
 
 ### What stops it going off the rails
 
+![A man in a 90s office, on the phone, looking worried](art/client-on-phone.jpg)
+
+*Your client, ten minutes after you gave them full repo access and an agent without guardrails.
+Agentic exists so this call never happens.*
+
 Guardrails at two levels, one for smooth UX and one that's the actual guarantee:
 
 - **Local (UX):** a Claude Code **PreToolUse hook** runs every edit through the *same* path-allowlist
