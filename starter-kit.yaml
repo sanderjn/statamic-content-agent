@@ -16,6 +16,7 @@ export_paths:
   - .claude/hooks
   - .claude/commands
   - SETUP.md
+  - ONBOARDING.md
   - CLAUDE.md
   - package.json
   - vite.config.js
